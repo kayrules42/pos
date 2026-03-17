@@ -42,12 +42,7 @@ document.getElementById("uploadForm").addEventListener("submit", async function(
             body: formData
         });
 
-        if(!response.ok){
-            throw new Error("Server returned error");
-        }
-
-        // Expect backend to respond AFTER processing is complete
-        const data = await response.json();
+     
 
         progressDiv.innerHTML =
             "<b>Processing Complete ✅</b><br><br>" +
@@ -55,14 +50,7 @@ document.getElementById("uploadForm").addEventListener("submit", async function(
             "<a href='"+SERVER + data.api_log +"' target='_blank'>Download API Log</a>";
 
     }
-    catch(err){
-
-        progressDiv.innerHTML =
-        "Error during processing.<br>" +
-        "Make sure server is running.<br>" +
-        err;
-
-    }
+   
 
 });
 
