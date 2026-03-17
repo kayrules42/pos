@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>UPC → POS Code Launcher</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    h2 { color: #333; }
+    #progress { margin-top: 20px; }
+    input, button { margin: 5px 0; padding: 5px; }
+  </style>
+</head>
+<body>
+
+<h2>UPC → POS Code Launcher</h2>
+
+<form id="uploadForm" enctype="multipart/form-data">
+  UPC File: <input type="file" name="upcfile" accept=".xls,.xlsx"><br>
+  Store File: <input type="file" name="storefile" accept=".xls,.xlsx"><br>
+  <button type="submit">Start Processing</button>
+</form>
+
+<div id="progress"></div>
+
+<script>
+
+    const SERVER = "https://uneloping-daxton-sightlessly.ngrok-free.dev";
+
+    document.getElementById("uploadForm").addEventListener("submit", async function(e){
+
+        e.preventDefault();
+
+        const progressDiv = document.getElementById("progress");
+
+        let formData = new FormData(this);
+
+        progressDiv.innerHTML = "Starting upload...";
+
+        try{
+
+            const response = await fetch(SERVER + "/start", {
+                method: "POST",
+                body: formData
+            });
+
+            if(!response.ok){
+                throw new Error("Server returned error");
+            }
+
+            progressDiv.innerHTML = "Processing started...";
+
+            checkProgress();
+
+        }
+        catch(err){
+
+            progressDiv.innerHTML =
+            "Error starting processing.<br>" +
+            "Make sure app.py and ngrok are running.<br>" +
+            err;
+
+        }
+
+    });
+
+
+    async function checkProgress(){
+
+        const progressDiv = document.getElementById("progress");
+
+        try{
+
+            let r = await fetch(SERVER + "/progress");
+
+            let data = await r.json();
+
+            progressDiv.innerHTML =
+            "<b>Status:</b> " + data.status + "<br>" +
+            "<b>Progress:</b> " + data.current + " / " + data.total + "<br>" +
+            data.message;
+
+            if(data.status !== "complete"){
+
+                setTimeout(checkProgress,2000);
+
+            }
+            else{
+
+                progressDiv.innerHTML +=
+                "<br><br>" +
+                "<a href='"+SERVER+"/download/updated' target='_blank'>Download Updated Excel</a><br>" +
+                "<a href='"+SERVER+"/download/api_log' target='_blank'>Download API Log</a>";
+
+            }
+
+        }
+        catch(err){
+
+            progressDiv.innerHTML +=
+            "<br>Connection lost while checking progress.";
+            setTimeout(checkProgress,4000)
+        }
+
+    }
+
+    </script>
+
+</body>
+</html>
