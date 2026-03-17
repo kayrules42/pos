@@ -24,86 +24,49 @@
 
 <script>
 
-    const SERVER = "https://uneloping-daxton-sightlessly.ngrok-free.dev";
+const SERVER = "https://test.dev";
 
-    document.getElementById("uploadForm").addEventListener("submit", async function(e){
+document.getElementById("uploadForm").addEventListener("submit", async function(e){
 
-        e.preventDefault();
+    e.preventDefault();
 
-        const progressDiv = document.getElementById("progress");
+    const progressDiv = document.getElementById("progress");
+    let formData = new FormData(this);
 
-        let formData = new FormData(this);
+    progressDiv.innerHTML = "Uploading and processing... please wait";
 
-        progressDiv.innerHTML = "Starting upload...";
+    try{
 
-        try{
+        const response = await fetch(SERVER + "/start", {
+            method: "POST",
+            body: formData
+        });
 
-            const response = await fetch(SERVER + "/start", {
-                method: "POST",
-                body: formData
-            });
-
-            if(!response.ok){
-                throw new Error("Server returned error");
-            }
-
-            progressDiv.innerHTML = "Processing started...";
-
-            checkProgress();
-
-        }
-        catch(err){
-
-            progressDiv.innerHTML =
-            "Error starting processing.<br>" +
-            "Make sure app.py and ngrok are running.<br>" +
-            err;
-
+        if(!response.ok){
+            throw new Error("Server returned error");
         }
 
-    });
+        // Expect backend to respond AFTER processing is complete
+        const data = await response.json();
 
+        progressDiv.innerHTML =
+            "<b>Processing Complete ✅</b><br><br>" +
+            "<a href='"+SERVER + data.updated_file +"' target='_blank'>Download Updated Excel</a><br>" +
+            "<a href='"+SERVER + data.api_log +"' target='_blank'>Download API Log</a>";
 
-    async function checkProgress(){
+    }
+    catch(err){
 
-        const progressDiv = document.getElementById("progress");
-
-        try{
-
-            let r = await fetch(SERVER + "/progress");
-
-            let data = await r.json();
-
-            progressDiv.innerHTML =
-            "<b>Status:</b> " + data.status + "<br>" +
-            "<b>Progress:</b> " + data.current + " / " + data.total + "<br>" +
-            data.message;
-
-            if(data.status !== "complete"){
-
-                setTimeout(checkProgress,2000);
-
-            }
-            else{
-
-                progressDiv.innerHTML +=
-                "<br><br>" +
-                "<a href='"+SERVER+"/download/updated' target='_blank'>Download Updated Excel</a><br>" +
-                "<a href='"+SERVER+"/download/api_log' target='_blank'>Download API Log</a>";
-
-            }
-
-        }
-        catch(err){
-
-            progressDiv.innerHTML +=
-            "<br>Connection lost while checking progress.";
-            setTimeout(checkProgress,4000)
-        }
+        progressDiv.innerHTML =
+        "Error during processing.<br>" +
+        "Make sure server is running.<br>" +
+        err;
 
     }
 
-    </script>
+});
+
+</script>
 
 </body>
 </html>
